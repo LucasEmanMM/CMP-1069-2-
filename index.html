@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão de Funcionários</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h2>Cadastro de Funcionários</h2>
+    <form id="formFuncionario">
+        <label>Nome: <input type="text" id="nome" required></label>
+        <br><br>
+        <label>Idade: <input type="number" id="idade" required></label>
+        <br><br>
+        <label>Cargo: <input type="text" id="cargo" required></label>
+        <br><br>
+        <label>Salário: <input type="number" id="salario" required></label>
+        <br><br>
+        <button type="submit">Cadastrar</button>
+    </form>
+    
+    <h2>Lista de Funcionários</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Idade</th>
+                <th>Cargo</th>
+                <th>Salário</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="tabelaFuncionarios"></tbody>
+    </table>
+
+    <h2>Relatórios</h2>
+    <button onclick="gerarRelatorios()">Gerar Relatórios</button>
+    <pre id="relatorios"></pre>
+
+    <script>
+        class Funcionario {
+            constructor(nome, idade, cargo, salario) {
+                this.nome = nome;
+                this.idade = idade;
+                this.cargo = cargo;
+                this.salario = salario;
+            }
+            toString() {
+                return `${this.nome}, ${this.idade} anos, ${this.cargo}, R$ ${this.salario}`;
+            }
+        }
+
+        let funcionarios = [];
+
+        document.getElementById("formFuncionario").addEventListener("submit", function(event) {
+            event.preventDefault();
+            let nome = document.getElementById("nome").value;
+            let idade = document.getElementById("idade").value;
+            let cargo = document.getElementById("cargo").value;
+            let salario = document.getElementById("salario").value;
+
+            let funcionario = new Funcionario(nome, parseInt(idade), cargo, parseFloat(salario));
+            funcionarios.push(funcionario);
+            atualizarTabela();
+            this.reset();
+        });
+
+        function atualizarTabela() {
+            let tbody = document.getElementById("tabelaFuncionarios");
+            tbody.innerHTML = "";
+            funcionarios.forEach((func, index) => {
+                let tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${func.nome}</td>
+                    <td>${func.idade}</td>
+                    <td>${func.cargo}</td>
+                    <td>R$ ${func.salario}</td>
+                    <td>
+                        <button onclick="editarFuncionario(${index})">Editar</button>
+                        <button onclick="excluirFuncionario(${index})">Excluir</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function excluirFuncionario(index) {
+            funcionarios.splice(index, 1);
+            atualizarTabela();
+        }
+
+        function editarFuncionario(index) {
+            let func = funcionarios[index];
+            document.getElementById("nome").value = func.nome;
+            document.getElementById("idade").value = func.idade;
+            document.getElementById("cargo").value = func.cargo;
+            document.getElementById("salario").value = func.salario;
+            
+            document.getElementById("formFuncionario").onsubmit = function(event) {
+                event.preventDefault();
+                funcionarios[index] = new Funcionario(
+                    document.getElementById("nome").value,
+                    parseInt(document.getElementById("idade").value),
+                    document.getElementById("cargo").value,
+                    parseFloat(document.getElementById("salario").value)
+                );
+                atualizarTabela();
+                this.reset();
+                this.onsubmit = adicionarFuncionario;
+            };
+        }
+
+        function gerarRelatorios() {
+            let relatorios = "";
+            let altosSalarios = funcionarios.filter(f => f.salario > 5000).map(f => f.toString()).join("\n");
+            let mediaSalarial = funcionarios.reduce((acc, f) => acc + f.salario, 0) / (funcionarios.length || 1);
+            let cargosUnicos = [...new Set(funcionarios.map(f => f.cargo))].join(", ");
+            let nomesMaiusculo = funcionarios.map(f => f.nome.toUpperCase()).join(", ");
+
+            relatorios += `Funcionários com salário > R$5000:\n${altosSalarios}\n\n`;
+            relatorios += `Média Salarial: R$${mediaSalarial.toFixed(2)}\n\n`;
+            relatorios += `Cargos únicos: ${cargosUnicos}\n\n`;
+            relatorios += `Nomes em maiúsculo: ${nomesMaiusculo}`;
+            
+            document.getElementById("relatorios").textContent = relatorios;
+        }
+    </script>
+</body>
+</html>
